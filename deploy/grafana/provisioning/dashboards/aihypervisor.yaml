@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: aihypervisor
+    orgId: 1
+    folder: AI Hypervisor Platform
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards/aihypervisor

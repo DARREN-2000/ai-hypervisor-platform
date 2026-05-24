@@ -1,0 +1,55 @@
+{
+  "uid": "aihypervisor-vm-lifecycle",
+  "title": "AI Hypervisor VM Lifecycle",
+  "tags": ["ai-hypervisor", "vm", "lifecycle"],
+  "schemaVersion": 38,
+  "version": 1,
+  "timezone": "browser",
+  "refresh": "30s",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "VM Resource CPU",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "avg by (vm_id) (api_server_vm_cpu_cores)",
+          "legendFormat": "{{vm_id}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "VM Memory",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [
+        {
+          "expr": "avg by (vm_id) (api_server_vm_memory_bytes)",
+          "legendFormat": "{{vm_id}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP Request Errors",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "targets": [
+        {
+          "expr": "sum(rate(api_server_http_requests_total{status=~\"4xx|5xx\"}[5m]))",
+          "legendFormat": "errors/sec"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Readiness",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "targets": [
+        {
+          "expr": "min(api_server_health_component_status)",
+          "legendFormat": "ready"
+        }
+      ]
+    }
+  ]
+}

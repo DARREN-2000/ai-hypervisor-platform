@@ -1,0 +1,55 @@
+{
+  "uid": "aihypervisor-gpu-utilization",
+  "title": "AI Hypervisor GPU Utilization",
+  "tags": ["ai-hypervisor", "gpu", "utilization"],
+  "schemaVersion": 38,
+  "version": 1,
+  "timezone": "browser",
+  "refresh": "30s",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "GPU Utilization",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "avg by (gpu_id) (api_server_gpu_utilization_percent)",
+          "legendFormat": "{{gpu_id}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "GPU Memory Used",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [
+        {
+          "expr": "avg by (gpu_id) (api_server_gpu_memory_used_bytes)",
+          "legendFormat": "{{gpu_id}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "GPU Temperature",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "targets": [
+        {
+          "expr": "avg by (gpu_id) (api_server_gpu_temperature_celsius)",
+          "legendFormat": "{{gpu_id}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "GPU Power Draw",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "targets": [
+        {
+          "expr": "avg by (gpu_id) (api_server_gpu_power_watts)",
+          "legendFormat": "{{gpu_id}}"
+        }
+      ]
+    }
+  ]
+}

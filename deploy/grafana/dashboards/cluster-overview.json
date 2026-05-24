@@ -1,0 +1,66 @@
+{
+  "uid": "aihypervisor-cluster-overview",
+  "title": "AI Hypervisor Cluster Overview",
+  "tags": ["ai-hypervisor", "cluster", "overview"],
+  "schemaVersion": 38,
+  "version": 1,
+  "timezone": "browser",
+  "refresh": "30s",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "API Request Rate",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "sum(rate(api_server_http_requests_total[5m]))",
+          "legendFormat": "requests/sec"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "API Request Latency",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(api_server_http_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Cluster Health",
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 8},
+      "targets": [
+        {
+          "expr": "min(api_server_health_component_status)",
+          "legendFormat": "health"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "VM Count",
+      "gridPos": {"h": 6, "w": 8, "x": 8, "y": 8},
+      "targets": [
+        {
+          "expr": "sum(api_server_vm_cpu_cores)",
+          "legendFormat": "vm count"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "GPU Count",
+      "gridPos": {"h": 6, "w": 8, "x": 16, "y": 8},
+      "targets": [
+        {
+          "expr": "sum(api_server_gpu_utilization_percent)",
+          "legendFormat": "gpu utilization"
+        }
+      ]
+    }
+  ]
+}

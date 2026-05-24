@@ -1,0 +1,94 @@
+<svg width="1600" height="520" viewBox="0 0 1600 520" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">AI Hypervisor Platform workflow flowchart</title>
+  <desc id="desc">Animated workflow showing API requests flowing through scheduler, GPU orchestration, task execution, host agent, and observability.</desc>
+  <defs>
+    <linearGradient id="bg" x1="100" y1="30" x2="1480" y2="500" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#07111F" />
+      <stop offset="1" stop-color="#0A1A2D" />
+    </linearGradient>
+    <linearGradient id="line" x1="160" y1="260" x2="1440" y2="260" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8AF0CF" />
+      <stop offset="0.5" stop-color="#8FB1FF" />
+      <stop offset="1" stop-color="#FFB06A" />
+    </linearGradient>
+    <filter id="glow" x="0" y="0" width="1600" height="520" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="9" />
+    </filter>
+  </defs>
+
+  <rect width="1600" height="520" rx="36" fill="url(#bg)" />
+  <g opacity="0.12">
+    <path d="M0 94H1600" stroke="#CFE3FF" stroke-width="1" stroke-dasharray="10 16" />
+    <path d="M0 188H1600" stroke="#CFE3FF" stroke-width="1" stroke-dasharray="10 16" />
+    <path d="M0 282H1600" stroke="#CFE3FF" stroke-width="1" stroke-dasharray="10 16" />
+    <path d="M0 376H1600" stroke="#CFE3FF" stroke-width="1" stroke-dasharray="10 16" />
+    <path d="M220 0V520" stroke="#CFE3FF" stroke-width="1" stroke-dasharray="10 16" />
+    <path d="M420 0V520" stroke="#CFE3FF" stroke-width="1" stroke-dasharray="10 16" />
+    <path d="M620 0V520" stroke="#CFE3FF" stroke-width="1" stroke-dasharray="10 16" />
+    <path d="M820 0V520" stroke="#CFE3FF" stroke-width="1" stroke-dasharray="10 16" />
+    <path d="M1020 0V520" stroke="#CFE3FF" stroke-width="1" stroke-dasharray="10 16" />
+    <path d="M1220 0V520" stroke="#CFE3FF" stroke-width="1" stroke-dasharray="10 16" />
+    <path d="M1420 0V520" stroke="#CFE3FF" stroke-width="1" stroke-dasharray="10 16" />
+  </g>
+
+  <g filter="url(#glow)" opacity="0.85">
+    <path d="M150 260C265 260 350 260 450 260" stroke="url(#line)" stroke-width="8" stroke-linecap="round" stroke-dasharray="1 18">
+      <animate attributeName="stroke-dashoffset" values="0;120" dur="2.6s" repeatCount="indefinite" />
+    </path>
+    <path d="M500 260C610 260 690 260 800 260" stroke="url(#line)" stroke-width="8" stroke-linecap="round" stroke-dasharray="1 18">
+      <animate attributeName="stroke-dashoffset" values="120;0" dur="2.8s" repeatCount="indefinite" />
+    </path>
+    <path d="M850 260C960 260 1040 260 1150 260" stroke="url(#line)" stroke-width="8" stroke-linecap="round" stroke-dasharray="1 18">
+      <animate attributeName="stroke-dashoffset" values="0;120" dur="3s" repeatCount="indefinite" />
+    </path>
+    <path d="M1200 260C1295 260 1375 260 1450 260" stroke="url(#line)" stroke-width="8" stroke-linecap="round" stroke-dasharray="1 18">
+      <animate attributeName="stroke-dashoffset" values="120;0" dur="3.2s" repeatCount="indefinite" />
+    </path>
+  </g>
+
+  <g>
+    <circle cx="150" cy="260" r="54" fill="#11253C" stroke="rgba(138,240,207,0.4)" stroke-width="2" />
+    <text x="150" y="254" fill="#ECF3FF" text-anchor="middle" font-family="Space Grotesk, IBM Plex Sans, sans-serif" font-size="24" font-weight="700">API</text>
+    <text x="150" y="286" fill="#A7B9D7" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="13">Requests</text>
+  </g>
+
+  <g>
+    <circle cx="500" cy="260" r="54" fill="#10233A" stroke="rgba(143,177,255,0.4)" stroke-width="2" />
+    <text x="500" y="254" fill="#ECF3FF" text-anchor="middle" font-family="Space Grotesk, IBM Plex Sans, sans-serif" font-size="20" font-weight="700">SCHED</text>
+    <text x="500" y="286" fill="#A7B9D7" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="13">Placement</text>
+  </g>
+
+  <g>
+    <circle cx="850" cy="260" r="54" fill="#112A2A" stroke="rgba(138,240,207,0.34)" stroke-width="2" />
+    <text x="850" y="254" fill="#ECF3FF" text-anchor="middle" font-family="Space Grotesk, IBM Plex Sans, sans-serif" font-size="19" font-weight="700">GPU</text>
+    <text x="850" y="286" fill="#A7B9D7" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="13">Reservation</text>
+  </g>
+
+  <g>
+    <circle cx="1200" cy="260" r="54" fill="#2A1C13" stroke="rgba(255,176,106,0.38)" stroke-width="2" />
+    <text x="1200" y="254" fill="#ECF3FF" text-anchor="middle" font-family="Space Grotesk, IBM Plex Sans, sans-serif" font-size="19" font-weight="700">TASK</text>
+    <text x="1200" y="286" fill="#A7B9D7" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="13">Execution</text>
+  </g>
+
+  <g>
+    <circle cx="1450" cy="260" r="54" fill="#102033" stroke="rgba(255,255,255,0.22)" stroke-width="2" />
+    <text x="1450" y="254" fill="#ECF3FF" text-anchor="middle" font-family="Space Grotesk, IBM Plex Sans, sans-serif" font-size="18" font-weight="700">OBS</text>
+    <text x="1450" y="286" fill="#A7B9D7" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="13">Metrics</text>
+  </g>
+
+  <g>
+    <circle r="10" fill="#FFFFFF">
+      <animateMotion dur="6.5s" repeatCount="indefinite" rotate="auto">
+        <mpath href="#route" />
+      </animateMotion>
+      <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite" />
+    </circle>
+    <path id="route" d="M204 260H1400" fill="none" />
+  </g>
+
+  <g>
+    <rect x="592" y="372" width="416" height="84" rx="20" fill="#0D1828" stroke="rgba(255,255,255,0.1)" />
+    <text x="800" y="404" fill="#ECF3FF" text-anchor="middle" font-family="Space Grotesk, IBM Plex Sans, sans-serif" font-size="23" font-weight="700">Live demo path</text>
+    <text x="800" y="434" fill="#A7B9D7" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="15">Works on GitHub Pages with static data and optional live API mode</text>
+  </g>
+</svg>

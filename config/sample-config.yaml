@@ -1,0 +1,250 @@
+# AI Hypervisor Platform - Sample Configuration
+
+# API Server Configuration
+api_server:
+  address: "0.0.0.0"
+  port: 8080
+  read_timeout: 15s
+  write_timeout: 15s
+  idle_timeout: 60s
+  max_header_bytes: 1048576
+  tls_cert: "/etc/aihypervisor/tls/server.crt"
+  tls_key: "/etc/aihypervisor/tls/server.key"
+  metrics:
+    enabled: true
+    prometheus_addr: "0.0.0.0"
+    prometheus_port: 8081
+    scrape_interval: 30s
+    retention_days: 30
+
+# VM Manager Configuration
+vm_manager:
+  max_concurrent_provisioning: 10
+  provisioning_timeout: 5m
+  state_check_interval: 30s
+  heartbeat_interval: 30s
+
+# Scheduler Configuration
+scheduler:
+  algorithm: "bin-packing"  # bin-packing, spread, numa-aware
+  scheduling_timeout: 10s
+  allow_overcommit: false
+  overcommit_ratio: 1.0
+  max_vms_per_node: 100
+  preferred_node_labels:
+    workload-type: "compute"
+
+# GPU Orchestrator Configuration
+gpu_orchestrator:
+  allocation_policy: "bin-packing"  # bin-packing, spread, numa-aware
+  allow_sharing: false
+  max_vms_per_gpu: 1
+  prefer_dedicated_gpus: true
+  allow_numa_remote_gpu: false
+  enable_mig: false  # Multi-Instance GPU
+  default_mig_profile: "7g.40gb"
+  health_check_interval: 30s
+  gpu_metrics_interval: 10s
+
+# Task Executor Configuration
+task_executor:
+  max_concurrent_tasks: 20
+  max_retries: 3
+  initial_backoff: 1s
+  max_backoff: 5m
+  task_timeout: 10m
+  failed_task_retention_ttl: 24h
+
+# Resource Monitor Configuration
+resource_monitor:
+  metrics_interval: 10s
+  metrics_retention_days: 30
+  prediction_window: 5m
+  alert_thresholds:
+    cpu_utilization: 80
+    memory_utilization: 85
+    disk_utilization: 90
+    gpu_utilization: 90
+    gpu_temperature: 80
+
+# PostgreSQL Database Configuration
+database:
+  host: "postgres.infra.svc.cluster.local"
+  port: 5432
+  username: "aihypervisor"
+  password: "${DB_PASSWORD}"  # Use secrets in Kubernetes
+  database: "aihypervisor"
+  ssl_mode: "require"
+  max_connections: 100
+  connect_timeout: 10s
+  idle_timeout: 5m
+  max_idle_conns: 25
+  backup_enabled: true
+  backup_interval: 6h
+
+# Redis Configuration
+redis:
+  host: "redis.infra.svc.cluster.local"
+  port: 6379
+  password: "${REDIS_PASSWORD}"  # Use secrets in Kubernetes
+  database: 0
+  pool_size: 50
+  connect_timeout: 5s
+  read_timeout: 3s
+  write_timeout: 3s
+
+# NATS Message Broker Configuration
+nats:
+  urls:
+    - "nats://nats.infra.svc.cluster.local:4222"
+  username: "aihypervisor"
+  password: "${NATS_PASSWORD}"  # Use secrets in Kubernetes
+  connect_timeout: 5s
+  max_reconnect: 10
+  reconnect_wait: 2s
+
+# Logging Configuration
+logging:
+  level: "info"  # debug, info, warn, error
+  format: "json"  # json, text
+  output_path: "stdout"  # stdout or file path
+  error_output_path: "stderr"
+  encoding: "utf-8"
+
+# Libvirt Configuration
+libvirt:
+  uri: "qemu:///system"
+  connection_timeout: 10s
+  max_connections: 10
+
+# Kubernetes Integration
+kubernetes:
+  enabled: true
+  config_path: ""  # Leave empty for in-cluster
+  namespace: "aihypervisor"
+  in_cluster: true
+  webhook_port: 9443
+  crd_enabled: true
+
+# Security Configuration
+security:
+  tls_enabled: true
+  tls_cert_path: "/etc/aihypervisor/tls/server.crt"
+  tls_key_path: "/etc/aihypervisor/tls/server.key"
+  ca_path: "/etc/aihypervisor/tls/ca.crt"
+  mutual_tls_enabled: true
+  api_key_required: false
+  jwt_enabled: true
+  jwt_secret: "${JWT_SECRET}"  # Use secrets in Kubernetes
+  rbac_enabled: true
+  audit_enabled: true
+
+---
+# Advanced Configuration for AI Inference Workloads
+
+# vLLM Integration
+inference:
+  vllm:
+    enabled: true
+    image: "vllm/vllm-openai:latest"
+    default_concurrency: 10
+    tensor_parallel_size: 2
+    pipeline_parallel_size: 1
+    
+  ollama:
+    enabled: true
+    image: "ollama/ollama:latest"
+    models:
+      - name: "llama2"
+        size_gb: 7
+        quantization: "q4"
+
+# Advanced Resource Configuration for Different VM Tiers
+vm_flavors:
+  - name: "small-gpu"
+    cpu: 4
+    memory: 8
+    disk_size: 50
+    gpu_requests:
+      - type: "nvidia"
+        model: "A100"
+        count: 1
+        min_memory_gb: 40
+  
+  - name: "medium-gpu"
+    cpu: 8
+    memory: 16
+    disk_size: 100
+    gpu_requests:
+      - type: "nvidia"
+        model: "A100"
+        count: 2
+        min_memory_gb: 80
+  
+  - name: "large-gpu-cluster"
+    cpu: 16
+    memory: 32
+    disk_size: 200
+    gpu_requests:
+      - type: "nvidia"
+        model: "A100"
+        count: 4
+        min_memory_gb: 160
+
+# VM Image Registry
+image_registry:
+  url: "registry.aihypervisor.local:5000"
+  username: "${REGISTRY_USERNAME}"
+  password: "${REGISTRY_PASSWORD}"
+  insecure: false
+  images:
+    - id: "ubuntu-22.04"
+      name: "Ubuntu 22.04 LTS"
+      format: "qcow2"
+      source: "s3://images/ubuntu-22.04.qcow2"
+      size_gb: 5
+      checksum: "sha256:abc123..."
+    
+    - id: "cuda-base"
+      name: "CUDA Base Image"
+      format: "qcow2"
+      source: "s3://images/cuda-12-base.qcow2"
+      size_gb: 15
+      checksum: "sha256:def456..."
+
+# Network Configuration
+network:
+  default_network: "bridge"
+  bridge_interface: "br-aihypervisor"
+  mtu: 1500
+  dns_servers:
+    - "8.8.8.8"
+    - "8.8.4.4"
+  dhcp_enabled: true
+  dhcp_range: "10.0.0.100-10.0.0.254"
+
+# Observability
+observability:
+  prometheus:
+    enabled: true
+    scrape_interval: 30s
+    retention: "15d"
+    remote_url: ""  # For remote storage
+  
+  grafana:
+    enabled: true
+    admin_user: "admin"
+    admin_password: "${GRAFANA_PASSWORD}"
+    dashboards:
+      - "cluster-overview"
+      - "gpu-utilization"
+      - "vm-lifecycle"
+  
+  loki:
+    enabled: true
+    retention_days: 7
+  
+  jaeger:
+    enabled: true
+    sampler_type: "probabilistic"
+    sampler_param: 0.1

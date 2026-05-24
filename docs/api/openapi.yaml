@@ -1,0 +1,799 @@
+openapi: 3.0.0
+info:
+  title: AI Hypervisor Platform API
+  description: REST API for GPU-aware AI VM orchestration
+  version: 1.0.0
+  contact:
+    name: AI Hypervisor Team
+
+servers:
+  - url: https://api.aihypervisor.local/api/v1
+    description: Production API
+  - url: http://localhost:8080/api/v1
+    description: Local development
+
+tags:
+  - name: VMs
+    description: Virtual Machine operations
+  - name: GPUs
+    description: GPU resource management
+  - name: Hosts
+    description: Host/Node operations
+  - name: Tasks
+    description: Background task management
+  - name: Monitoring
+    description: Metrics and monitoring
+  - name: Health
+    description: System health checks
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check endpoint
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+        '503':
+          description: Service is degraded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+  /vms:
+    get:
+      tags:
+        - VMs
+      summary: List virtual machines
+      parameters:
+        - name: namespace
+          in: query
+          description: Filter by namespace
+          schema:
+            type: string
+        - name: state
+          in: query
+          description: Filter by VM state
+          schema:
+            type: string
+        - name: host_node_id
+          in: query
+          description: Filter by host node
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of VMs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VirtualMachine'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags:
+        - VMs
+      summary: Create a new virtual machine
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVMRequest'
+      responses:
+        '201':
+          description: VM created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VirtualMachine'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: VM already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '507':
+          description: Insufficient resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /vms/{vmId}:
+    get:
+      tags:
+        - VMs
+      summary: Get VM details
+      parameters:
+        - name: vmId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: VM details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VirtualMachine'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags:
+        - VMs
+      summary: Update VM configuration
+      parameters:
+        - name: vmId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateVMRequest'
+      responses:
+        '200':
+          description: VM updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VirtualMachine'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Invalid state transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - VMs
+      summary: Delete a virtual machine
+      parameters:
+        - name: vmId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: VM deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: VM cannot be deleted in current state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /vms/{vmId}/start:
+    post:
+      tags:
+        - VMs
+      summary: Start a VM
+      parameters:
+        - name: vmId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Start operation accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Invalid state transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /vms/{vmId}/stop:
+    post:
+      tags:
+        - VMs
+      summary: Stop a VM
+      parameters:
+        - name: vmId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Stop operation accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /vms/{vmId}/reboot:
+    post:
+      tags:
+        - VMs
+      summary: Reboot a VM
+      parameters:
+        - name: vmId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Reboot operation accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /gpus:
+    get:
+      tags:
+        - GPUs
+      summary: List GPUs
+      parameters:
+        - name: node_id
+          in: query
+          description: Filter by node
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by GPU status
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of GPUs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GPU'
+
+  /gpus/{gpuId}:
+    get:
+      tags:
+        - GPUs
+      summary: Get GPU details
+      parameters:
+        - name: gpuId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: GPU details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GPU'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /hosts:
+    get:
+      tags:
+        - Hosts
+      summary: List host nodes
+      responses:
+        '200':
+          description: List of hosts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HostNode'
+
+  /hosts/{nodeId}:
+    get:
+      tags:
+        - Hosts
+      summary: Get host details
+      parameters:
+        - name: nodeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Host details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HostNode'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /hosts/{nodeId}/metrics:
+    get:
+      tags:
+        - Hosts
+      summary: Get host resource metrics
+      parameters:
+        - name: nodeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Host metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceMetrics'
+
+  /tasks/{taskId}:
+    get:
+      tags:
+        - Tasks
+      summary: Get task status
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /metrics:
+    get:
+      tags:
+        - Monitoring
+      summary: Get cluster metrics
+      responses:
+        '200':
+          description: Cluster metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClusterMetrics'
+
+components:
+  schemas:
+    VirtualMachine:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        namespace:
+          type: string
+        flavor:
+          $ref: '#/components/schemas/VMFlavor'
+        image:
+          $ref: '#/components/schemas/VMImage'
+        state:
+          type: string
+          enum:
+            - created
+            - provisioning
+            - running
+            - scaling
+            - failed
+            - deleting
+            - deleted
+        host_node_id:
+          type: string
+        network_config:
+          $ref: '#/components/schemas/NetworkConfig'
+        storage_config:
+          $ref: '#/components/schemas/StorageConfig'
+        gpu_allocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/GPUAllocation'
+        resource_usage:
+          $ref: '#/components/schemas/ResourceMetrics'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateVMRequest:
+      type: object
+      required:
+        - name
+        - flavor
+        - image
+      properties:
+        name:
+          type: string
+        namespace:
+          type: string
+          default: default
+        flavor:
+          $ref: '#/components/schemas/VMFlavor'
+        image:
+          $ref: '#/components/schemas/VMImage'
+        network_config:
+          $ref: '#/components/schemas/NetworkConfig'
+        gpu_requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/GPURequest'
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+
+    UpdateVMRequest:
+      type: object
+      properties:
+        flavor:
+          $ref: '#/components/schemas/VMFlavor'
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+
+    VMFlavor:
+      type: object
+      required:
+        - name
+        - cpu
+        - memory
+      properties:
+        name:
+          type: string
+        cpu:
+          type: integer
+        memory:
+          type: integer
+        disk_size:
+          type: integer
+        cpu_model:
+          type: string
+        features:
+          type: array
+          items:
+            type: string
+
+    VMImage:
+      type: object
+      required:
+        - id
+        - name
+        - format
+        - source
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        format:
+          type: string
+        source:
+          type: string
+        size_gb:
+          type: integer
+        checksum:
+          type: string
+
+    NetworkConfig:
+      type: object
+      properties:
+        type:
+          type: string
+        interfaces:
+          type: array
+          items:
+            $ref: '#/components/schemas/NetworkInterface'
+
+    NetworkInterface:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        mac:
+          type: string
+        ip:
+          type: string
+        bridge:
+          type: string
+
+    StorageConfig:
+      type: object
+      properties:
+        volumes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Volume'
+
+    Volume:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        source:
+          type: string
+        size_gb:
+          type: integer
+
+    GPURequest:
+      type: object
+      properties:
+        type:
+          type: string
+        model:
+          type: string
+        count:
+          type: integer
+        min_memory_gb:
+          type: integer
+
+    GPU:
+      type: object
+      properties:
+        id:
+          type: string
+        host_node_id:
+          type: string
+        type:
+          type: string
+        model:
+          type: string
+        vram:
+          type: integer
+        status:
+          type: string
+        metrics:
+          $ref: '#/components/schemas/GPUMetrics'
+
+    GPUMetrics:
+      type: object
+      properties:
+        utilization:
+          type: integer
+        memory_used:
+          type: integer
+        temperature_c:
+          type: integer
+        power_draw:
+          type: integer
+
+    GPUAllocation:
+      type: object
+      properties:
+        id:
+          type: string
+        gpu_id:
+          type: string
+        vm_name:
+          type: string
+        allocated_at:
+          type: string
+          format: date-time
+
+    HostNode:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+        capacity:
+          $ref: '#/components/schemas/HostCapacity'
+        allocated_resources:
+          $ref: '#/components/schemas/HostAllocated'
+        gpus:
+          type: array
+          items:
+            $ref: '#/components/schemas/GPU'
+
+    HostCapacity:
+      type: object
+      properties:
+        cpu:
+          type: integer
+        memory:
+          type: integer
+        disk_gb:
+          type: integer
+        gpu_slots:
+          type: integer
+
+    HostAllocated:
+      type: object
+      properties:
+        cpu:
+          type: integer
+        memory:
+          type: integer
+        disk_gb:
+          type: integer
+        vms:
+          type: integer
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+        error_message:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+
+    ResourceMetrics:
+      type: object
+      properties:
+        cpu:
+          type: number
+        memory:
+          type: integer
+        disk_io_read:
+          type: integer
+        disk_io_write:
+          type: integer
+        network_in:
+          type: integer
+        network_out:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+
+    ClusterMetrics:
+      type: object
+      properties:
+        total_cpu:
+          type: integer
+        total_memory_gb:
+          type: integer
+        allocated_cpu:
+          type: integer
+        allocated_mem_gb:
+          type: integer
+        utilization_cpu:
+          type: number
+        utilization_mem:
+          type: number
+        node_count:
+          type: integer
+        vm_count:
+          type: integer
+        gpu_count:
+          type: integer
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version:
+          type: string
+        components:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ComponentStatus'
+
+    ComponentStatus:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+security:
+  - bearerAuth: []
+  - apiKey: []

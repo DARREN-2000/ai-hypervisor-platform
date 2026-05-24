@@ -1,0 +1,817 @@
+openapi: 3.0.3
+info:
+  title: AI Hypervisor Platform API
+  description: |
+    Production-ready REST contract for AI Hypervisor Platform.
+    Versioned API focused on VM lifecycle, workload orchestration, scheduling,
+    monitoring, async tasks, and health/metrics. Includes pagination, filtering,
+    auth-ready security schemes and standard error structures for robust clients.
+  version: 2.0.0
+  contact:
+    name: AI Hypervisor Team
+
+servers:
+  - url: https://api.aihypervisor.local/api/v2
+    description: Production (v2)
+  - url: https://api.aihypervisor.local/api/v1
+    description: Back-compat legacy (v1)
+  - url: http://localhost:8080/api/v2
+    description: Local development (v2)
+
+tags:
+  - name: VMs
+    description: Virtual Machine lifecycle operations
+  - name: Workloads
+    description: Workload / orchestration APIs (jobs, groups)
+  - name: Scheduler
+    description: Scheduling policies, queues and decisions
+  - name: Tasks
+    description: Async tasks and job status
+  - name: Monitoring
+    description: Metrics, alerts, and resource telemetry
+  - name: Health
+    description: Liveness and readiness probes
+  - name: Auth
+    description: Authentication and token introspection
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: System health (liveness + readiness)
+      responses:
+        '200':
+          description: All critical components healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+        '503':
+          description: One or more critical components degraded or unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+  /metrics:
+    get:
+      tags: [Monitoring]
+      summary: Aggregate cluster metrics (JSON); use Prometheus endpoint for scraping
+      responses:
+        '200':
+          description: Cluster metrics snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClusterMetrics'
+
+  /v2/vms:
+    get:
+      tags: [VMs]
+      summary: List Virtual Machines (paginated)
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/Namespace'
+        - name: state
+          in: query
+          schema:
+            type: string
+          description: Filter by VM state (running, failed, provisioning...)
+        - name: host_node_id
+          in: query
+          schema:
+            type: string
+          description: Filter by host/node id
+      responses:
+        '200':
+          description: Paginated list of VMs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_VM'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+    post:
+      tags: [VMs]
+      summary: Create a new VM
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVMRequest'
+      responses:
+        '201':
+          description: VM accepted for provisioning
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VirtualMachine'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '507':
+          description: Insufficient resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v2/vms/{vmId}:
+    parameters:
+      - name: vmId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [VMs]
+      summary: Get VM details
+      responses:
+        '200':
+          description: VM resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VirtualMachine'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [VMs]
+      summary: Partial update of VM (idempotent)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateVMRequest'
+      responses:
+        '200':
+          description: Updated VM
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VirtualMachine'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      tags: [VMs]
+      summary: Delete a VM
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: VM deletion accepted
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /v2/vms/{vmId}/actions:
+    post:
+      tags: [VMs]
+      summary: Trigger VM action (start/stop/reboot/resize)
+      description: |
+        Action requests are executed asynchronously and return a `Task` resource
+        the client can poll.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [start, stop, reboot, resize]
+                parameters:
+                  type: object
+      responses:
+        '202':
+          description: Action accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v2/tasks:
+    get:
+      tags: [Tasks]
+      summary: List async tasks (paginated)
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/Sort'
+        - name: status
+          in: query
+          schema:
+            type: string
+          description: Filter by task status (pending, running, succeeded, failed)
+      responses:
+        '200':
+          description: Paginated tasks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_Task'
+
+    post:
+      tags: [Tasks]
+      summary: Create an ad-hoc async task
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /v2/tasks/{taskId}:
+    parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Tasks]
+      summary: Get task status and logs
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v2/workloads:
+    get:
+      tags: [Workloads]
+      summary: List workloads (jobs/groups)
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/Namespace'
+      responses:
+        '200':
+          description: Paginated workloads
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse_Workload'
+
+    post:
+      tags: [Workloads]
+      summary: Submit a workload (job or batch)
+      security:
+        - bearerAuth: [workload:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkloadRequest'
+      responses:
+        '201':
+          description: Workload submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workload'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '507':
+          $ref: '#/components/responses/InsufficientResources'
+
+  /v2/scheduler/policies:
+    get:
+      tags: [Scheduler]
+      summary: List scheduling policies
+      responses:
+        '200':
+          description: Policies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SchedulerPolicy'
+
+    post:
+      tags: [Scheduler]
+      summary: Create or update a scheduling policy
+      security:
+        - bearerAuth: [scheduler:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchedulerPolicy'
+      responses:
+        '200':
+          description: Policy created/updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchedulerPolicy'
+
+  /v2/scheduler/simulate:
+    post:
+      tags: [Scheduler]
+      summary: Simulate scheduling decision for given workloads
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                workloads:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/WorkloadSpec'
+      responses:
+        '200':
+          description: Simulation result with placement suggestions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchedulingSimulationResult'
+
+components:
+  parameters:
+    Page:
+      name: page
+      in: query
+      description: Page number (1-based)
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PerPage:
+      name: per_page
+      in: query
+      description: Items per page (max 100)
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    Sort:
+      name: sort
+      in: query
+      description: Sort expression, e.g. `-created_at` or `name`
+      schema:
+        type: string
+    Namespace:
+      name: namespace
+      in: query
+      description: Multi-tenant namespace identifier
+      schema:
+        type: string
+
+  schemas:
+    PaginatedMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+        per_page:
+          type: integer
+        total_pages:
+          type: integer
+        total_items:
+          type: integer
+
+    PaginatedResponse_VM:
+      type: object
+      properties:
+        meta:
+          $ref: '#/components/schemas/PaginatedMeta'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/VirtualMachine'
+
+    PaginatedResponse_Task:
+      type: object
+      properties:
+        meta:
+          $ref: '#/components/schemas/PaginatedMeta'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+
+    PaginatedResponse_Workload:
+      type: object
+      properties:
+        meta:
+          $ref: '#/components/schemas/PaginatedMeta'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Workload'
+
+    VirtualMachine:
+      type: object
+      required: [id, name, state]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        namespace:
+          type: string
+        flavor:
+          $ref: '#/components/schemas/VMFlavor'
+        image:
+          $ref: '#/components/schemas/VMImage'
+        state:
+          type: string
+          enum: [created, provisioning, running, scaling, failed, deleting, deleted]
+        host_node_id:
+          type: string
+        gpu_allocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/GPUAllocation'
+        resource_usage:
+          $ref: '#/components/schemas/ResourceMetrics'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateVMRequest:
+      type: object
+      required: [name, flavor, image]
+      properties:
+        name:
+          type: string
+        namespace:
+          type: string
+          default: default
+        flavor:
+          $ref: '#/components/schemas/VMFlavor'
+        image:
+          $ref: '#/components/schemas/VMImage'
+        network_config:
+          $ref: '#/components/schemas/NetworkConfig'
+        gpu_requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/GPURequest'
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+
+    UpdateVMRequest:
+      type: object
+      properties:
+        flavor:
+          $ref: '#/components/schemas/VMFlavor'
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+
+    VMFlavor:
+      type: object
+      properties:
+        name:
+          type: string
+        cpu:
+          type: integer
+        memory_mb:
+          type: integer
+        disk_gb:
+          type: integer
+
+    VMImage:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        format:
+          type: string
+        source:
+          type: string
+
+    GPURequest:
+      type: object
+      properties:
+        model:
+          type: string
+        count:
+          type: integer
+        min_memory_gb:
+          type: integer
+
+    GPUAllocation:
+      type: object
+      properties:
+        id:
+          type: string
+        gpu_id:
+          type: string
+        vm_id:
+          type: string
+        allocated_at:
+          type: string
+          format: date-time
+
+    Task:
+      type: object
+      required: [id, status]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, succeeded, failed, cancelled]
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        result:
+          type: object
+        error_message:
+          type: string
+        logs_url:
+          type: string
+          format: uri
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+
+    CreateTaskRequest:
+      type: object
+      properties:
+        type:
+          type: string
+        payload:
+          type: object
+
+    Workload:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        namespace:
+          type: string
+        spec:
+          $ref: '#/components/schemas/WorkloadSpec'
+        status:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+
+    CreateWorkloadRequest:
+      type: object
+      required: [name, spec]
+      properties:
+        name:
+          type: string
+        namespace:
+          type: string
+          default: default
+        spec:
+          $ref: '#/components/schemas/WorkloadSpec'
+
+    WorkloadSpec:
+      type: object
+      properties:
+        replicas:
+          type: integer
+          default: 1
+        vm_template:
+          $ref: '#/components/schemas/CreateVMRequest'
+        scheduling:
+          type: object
+
+    SchedulerPolicy:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        rules:
+          type: array
+          items:
+            type: object
+
+    SchedulingSimulationResult:
+      type: object
+      properties:
+        placements:
+          type: array
+          items:
+            type: object
+            properties:
+              workload_id:
+                type: string
+              node_id:
+                type: string
+              reason:
+                type: string
+
+    ResourceMetrics:
+      type: object
+      properties:
+        cpu_cores:
+          type: number
+        memory_mb:
+          type: integer
+        disk_io_read:
+          type: integer
+        disk_io_write:
+          type: integer
+        network_in:
+          type: integer
+        network_out:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+
+    ClusterMetrics:
+      type: object
+      properties:
+        total_cpu_cores:
+          type: integer
+        total_memory_mb:
+          type: integer
+        allocated_cpu_cores:
+          type: integer
+        allocated_memory_mb:
+          type: integer
+        utilization_cpu:
+          type: number
+        utilization_memory:
+          type: number
+        node_count:
+          type: integer
+        vm_count:
+          type: integer
+        gpu_count:
+          type: integer
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version:
+          type: string
+        components:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ComponentStatus'
+
+    ComponentStatus:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Conflict or invalid state transition
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InsufficientResources:
+      description: Insufficient resources to satisfy request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.aihypervisor.local/oauth/token
+          scopes:
+            workload:write: "Create/modify workloads"
+            scheduler:write: "Modify scheduler policies"
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+security:
+  - bearerAuth: []
+
+
+externalDocs:
+  description: API usage guide and best practices
+  url: https://docs.aihypervisor.local/api
