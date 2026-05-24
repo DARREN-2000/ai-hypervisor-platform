@@ -15,6 +15,13 @@ import (
 	rediscache "github.com/DARREN-2000/ai-hypervisor-platform/internal/storage/redis"
 )
 
+var (
+	connectPostgres = postgres.Connect
+	newRedisClient  = rediscache.NewClient
+	pingRedis       = rediscache.Ping
+	connectNATS     = messaging.Connect
+)
+
 // Dependencies holds shared infrastructure clients.
 type Dependencies struct {
 	Config *config.PlatformConfig
@@ -30,18 +37,18 @@ func Build(ctx context.Context, cfg *config.PlatformConfig, logger *logrus.Logge
 		return nil, fmt.Errorf("config is required")
 	}
 
-	db, err := postgres.Connect(ctx, cfg.Database)
+	db, err := connectPostgres(ctx, cfg.Database)
 	if err != nil {
 		return nil, err
 	}
 
-	redisClient := rediscache.NewClient(cfg.Redis)
-	if err := rediscache.Ping(ctx, redisClient); err != nil {
+	redisClient := newRedisClient(cfg.Redis)
+	if err := pingRedis(ctx, redisClient); err != nil {
 		_ = db.Close()
 		return nil, fmt.Errorf("ping redis: %w", err)
 	}
 
-	natsConn, err := messaging.Connect(cfg.NATS)
+	natsConn, err := connectNATS(cfg.NATS)
 	if err != nil {
 		_ = db.Close()
 		_ = redisClient.Close()

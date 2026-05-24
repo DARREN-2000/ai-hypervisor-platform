@@ -166,6 +166,8 @@ GitHub Pages demo URL:
 
 - `https://DARREN-2000.github.io/ai-hypervisor-platform/`
 
+Operational runbooks and recovery guidance live in [docs/operations/runbook.md](docs/operations/runbook.md) and [docs/operations/observability.md](docs/operations/observability.md).
+
 ---
 
 **API Overview**

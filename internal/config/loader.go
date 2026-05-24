@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 )
 
@@ -41,7 +42,9 @@ func Load() (*PlatformConfig, error) {
 		}
 	}
 
-	if err := loader.Unmarshal(cfg); err != nil {
+	if err := loader.Unmarshal(cfg, func(dc *mapstructure.DecoderConfig) {
+		dc.TagName = "yaml"
+	}); err != nil {
 		return nil, fmt.Errorf("unmarshal config: %w", err)
 	}
 

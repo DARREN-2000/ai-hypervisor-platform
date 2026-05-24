@@ -109,6 +109,11 @@ func (s *APIServer) SetHealthChecks(checks map[string]HealthCheck) {
 	s.healthChecks = checks
 }
 
+// Handler returns the HTTP handler for the API server.
+func (s *APIServer) Handler() http.Handler {
+	return s.router
+}
+
 // RegisterRoutes registers all API routes
 func (s *APIServer) RegisterRoutes() {
 	// Middleware
