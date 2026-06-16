@@ -38,6 +38,9 @@ func selectGPUsForVM(requests []models.GPURequest, gpus []*models.GPU, strategy 
 		for _, gpu := range remaining {
 			if gpuMatchesRequest(req, gpu) {
 				matched = append(matched, gpu)
+				if len(matched) == req.Count {
+					break // Bolt optimization: stop iterating once we found enough GPUs
+				}
 			}
 		}
 
