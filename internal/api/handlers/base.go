@@ -38,9 +38,13 @@ func (h *BaseHandler) WriteError(w http.ResponseWriter, err error) {
 		return
 	}
 
-	payload := map[string]string{"error": "internal_error"}
-	if err != nil {
-		payload["message"] = err.Error()
+	if err != nil && h.logger != nil {
+		h.logger.WithError(err).Error("Internal server error")
+	}
+
+	payload := map[string]string{
+		"error":   "internal_error",
+		"message": "An unexpected error occurred",
 	}
 
 	h.WriteJSON(w, http.StatusInternalServerError, payload)
