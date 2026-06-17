@@ -28,27 +28,31 @@ func selectGPUsForVM(requests []models.GPURequest, gpus []*models.GPU, strategy 
 	})
 
 	selected := make([]*models.GPU, 0)
-	remaining := append([]*models.GPU{}, available...)
+	// ⚡ Bolt: Use a map to track used GPUs instead of repeated slice allocations
+	used := make(map[string]bool)
 
 	for _, req := range requests {
 		if req.Count <= 0 {
 			continue
 		}
-		matched := make([]*models.GPU, 0)
-		for _, gpu := range remaining {
+		pickedCount := 0
+		for _, gpu := range available {
+			if gpu == nil || used[gpu.ID] {
+				continue
+			}
 			if gpuMatchesRequest(req, gpu) {
-				matched = append(matched, gpu)
+				selected = append(selected, gpu)
+				used[gpu.ID] = true
+				pickedCount++
+				if pickedCount == req.Count {
+					break
+				}
 			}
 		}
 
-		if len(matched) < req.Count {
+		if pickedCount < req.Count {
 			return nil, fmt.Errorf("insufficient gpu capacity")
 		}
-
-		picked := matched[:req.Count]
-		selected = append(selected, picked...)
-
-		remaining = subtractGPUs(remaining, picked)
 	}
 
 	return selected, nil
@@ -123,24 +127,3 @@ func gpuSupportsFeature(gpu *models.GPU, feature string) bool {
 	}
 }
 
-func subtractGPUs(all []*models.GPU, remove []*models.GPU) []*models.GPU {
-	removeSet := make(map[string]struct{}, len(remove))
-	for _, gpu := range remove {
-		if gpu == nil {
-			continue
-		}
-		removeSet[gpu.ID] = struct{}{}
-	}
-
-	filtered := make([]*models.GPU, 0, len(all))
-	for _, gpu := range all {
-		if gpu == nil {
-			continue
-		}
-		if _, exists := removeSet[gpu.ID]; exists {
-			continue
-		}
-		filtered = append(filtered, gpu)
-	}
-	return filtered
-}
