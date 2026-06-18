@@ -242,8 +242,32 @@ async function hydrateStatus() {
 }
 
 if (demoRefresh) {
-  demoRefresh.addEventListener('click', () => {
+  demoRefresh.addEventListener('click', async () => {
+    // Set button state to loading/disabled
+    demoRefresh.disabled = true;
+    const originalText = demoRefresh.textContent;
+    demoRefresh.textContent = 'Refreshing...';
+
+    // Add visual feedback to grid containers
+    const grids = [metricsGrid, workflowGrid, activityList];
+    grids.forEach(grid => {
+      if (grid) grid.style.opacity = '0.5';
+    });
+
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 600));
+
+    // Refresh content
     renderDemoConsole();
+
+    // Restore visual state
+    grids.forEach(grid => {
+      if (grid) grid.style.opacity = '1';
+    });
+
+    // Restore button state
+    demoRefresh.textContent = originalText;
+    demoRefresh.disabled = false;
   });
 }
 
