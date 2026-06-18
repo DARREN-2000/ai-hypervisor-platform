@@ -226,8 +226,9 @@ func (s *APIServer) buildHealthReport(ctx context.Context) (map[string]interface
 		}
 		if check != nil {
 			if err := check(ctx); err != nil {
+				s.logger.WithError(err).WithField("component", name).Error("Health check failed")
 				component["status"] = "degraded"
-				component["error"] = err.Error()
+				component["error"] = "health check failed"
 				status = "degraded"
 				httpStatus = http.StatusServiceUnavailable
 			}
