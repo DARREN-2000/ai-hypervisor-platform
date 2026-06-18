@@ -1,0 +1,3 @@
+## 2024-06-18 - Missing Interaction Feedback for Static Data
+**Learning:** When interacting with static mock data (like the "Refresh demo" button), synchronous re-renders of the identical data occur instantly, providing zero visual feedback to the user. This leaves users unsure if their click actually registered or if the UI is broken.
+**Action:** Always add simulated network delays, explicit loading text/spinners, and visual opacity changes when simulating data fetches to reassure users that the system is responding to their actions.
