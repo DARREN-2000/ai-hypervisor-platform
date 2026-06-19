@@ -73,7 +73,7 @@ func (d *Dependencies) Close(ctx context.Context) error {
 	}
 
 	if d.NATS != nil {
-		d.NATS.Drain()
+		_ = d.NATS.Drain()
 		d.NATS.Close()
 	}
 
