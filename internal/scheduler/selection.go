@@ -34,7 +34,7 @@ func selectGPUsForVM(requests []models.GPURequest, gpus []*models.GPU, strategy 
 		if req.Count <= 0 {
 			continue
 		}
-		matched := make([]*models.GPU, 0)
+		matched := make([]*models.GPU, 0, req.Count) // Bolt optimization: pre-allocate matched capacity to prevent array reallocation
 		for _, gpu := range remaining {
 			if gpuMatchesRequest(req, gpu) {
 				matched = append(matched, gpu)
