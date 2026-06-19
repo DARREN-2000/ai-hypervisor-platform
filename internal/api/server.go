@@ -227,7 +227,8 @@ func (s *APIServer) buildHealthReport(ctx context.Context) (map[string]interface
 		if check != nil {
 			if err := check(ctx); err != nil {
 				component["status"] = "degraded"
-				component["error"] = err.Error()
+				// Do not expose raw error details on public endpoints
+				component["error"] = "dependency check failed"
 				status = "degraded"
 				httpStatus = http.StatusServiceUnavailable
 			}
