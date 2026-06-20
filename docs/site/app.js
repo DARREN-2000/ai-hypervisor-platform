@@ -244,6 +244,16 @@ async function hydrateStatus() {
 if (demoRefresh) {
   demoRefresh.addEventListener('click', () => {
     renderDemoConsole();
+
+    // UX feedback: temporarily disable and change text
+    const originalText = demoRefresh.textContent;
+    demoRefresh.textContent = 'Refreshed!';
+    demoRefresh.disabled = true;
+
+    setTimeout(() => {
+      demoRefresh.textContent = originalText;
+      demoRefresh.disabled = false;
+    }, 1500);
   });
 }
 
