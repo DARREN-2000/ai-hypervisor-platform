@@ -1,215 +1,25 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta
-      name="description"
-      content="AI Hypervisor Platform is a control plane for GPU-accelerated VM fleets with orchestration, observability, and deployment tooling."
-    />
-    <meta name="theme-color" content="#07111f" />
-    <title>AI Hypervisor Platform</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="styles.css" />
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Onyx | The Operating System for AI Infrastructure</title>
+    <meta name="description" content="Unify your GPU clusters, orchestrate complex ML workloads, and scale from prototype to production with a single command." />
+    <!-- OpenGraph -->
+    <meta property="og:title" content="Onyx | The Operating System for AI Infrastructure" />
+    <meta property="og:description" content="Unify your GPU clusters, orchestrate complex ML workloads, and scale from prototype to production with a single command." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://onyx.dev" />
+    <meta property="og:image" content="https://onyx.dev/og-image.jpg" />
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Onyx | The Operating System for AI Infrastructure" />
+    <meta name="twitter:description" content="Unify your GPU clusters, orchestrate complex ML workloads, and scale from prototype to production with a single command." />
+    <meta name="twitter:image" content="https://onyx.dev/og-image.jpg" />
   </head>
-  <body>
-    <div class="noise"></div>
-    <div class="orb orb-a"></div>
-    <div class="orb orb-b"></div>
-
-    <main class="shell">
-      <section class="hero card">
-        <div class="hero-copy">
-          <div class="eyebrow">
-            <span class="status-dot"></span>
-            Modern GPU VM control plane
-          </div>
-          <h1>AI Hypervisor Platform</h1>
-          <p class="lede">
-            A production-oriented orchestration layer for GPU-backed virtual machines,
-            scheduling, lifecycle management, telemetry, and repeatable deployment.
-          </p>
-
-          <div class="cta-row">
-            <a
-              class="button primary"
-              href="https://github.com/DARREN-2000/ai-hypervisor-platform/blob/main/README.md"
-            >
-              Repository overview
-            </a>
-            <a
-              class="button secondary"
-              href="https://github.com/DARREN-2000/ai-hypervisor-platform/blob/main/docs/api/openapi.yaml"
-            >
-              OpenAPI spec
-            </a>
-          </div>
-
-          <div class="kpi-row">
-            <article class="kpi">
-              <span class="kpi-value">7</span>
-              <span class="kpi-label">services</span>
-            </article>
-            <article class="kpi">
-              <span class="kpi-value">1</span>
-              <span class="kpi-label">pages site</span>
-            </article>
-            <article class="kpi">
-              <span class="kpi-value">2</span>
-              <span class="kpi-label">container targets</span>
-            </article>
-          </div>
-        </div>
-
-        <div class="hero-visual">
-          <img
-            src="animations/ai-hypervisor-hero.svg"
-            alt="Animated AI Hypervisor control plane diagram"
-            class="hero-art"
-          />
-          <div class="hero-caption">
-            Static demo mode ships with the Pages site. Pass <span>?api=</span> to connect a live backend.
-          </div>
-        </div>
-
-        <aside class="status-panel">
-          <div class="panel-header">
-            <span>Live status</span>
-            <span class="muted" id="status-source">static fallback</span>
-          </div>
-
-          <div class="status-grid" id="status-grid">
-            <div class="status-card">
-              <span class="status-label">API</span>
-              <strong id="api-status">checking</strong>
-              <p id="api-detail">Configure ?api=https://your-api.example.com</p>
-            </div>
-            <div class="status-card">
-              <span class="status-label">Ready</span>
-              <strong id="ready-status">pending</strong>
-              <p>Health endpoints are exposed by the control plane.</p>
-            </div>
-            <div class="status-card">
-              <span class="status-label">Version</span>
-              <strong id="version-status">v1</strong>
-              <p>Static frontend published via GitHub Pages.</p>
-            </div>
-          </div>
-        </aside>
-      </section>
-
-      <section class="grid">
-        <article class="card feature">
-          <h2>Control Surface</h2>
-          <p>
-            REST and WebSocket APIs are designed for VM lifecycle operations, GPU
-            allocation, host management, and task execution.
-          </p>
-          <ul>
-            <li>API gateway and request validation</li>
-            <li>VM manager, scheduler, and task executor</li>
-            <li>Host agent and resource monitor pipelines</li>
-          </ul>
-        </article>
-
-        <article class="card feature">
-          <h2>Delivery Path</h2>
-          <p>
-            GitHub Actions publishes this site to Pages and builds container images for
-            the API server and worker using the shared Dockerfile.
-          </p>
-          <ul>
-            <li>GitHub Pages deployment from <code>docs/site</code></li>
-            <li>GHCR images for ai-hypervisor-platform-api and ai-hypervisor-platform-worker</li>
-            <li>Fetch the OpenAPI document directly from the repository</li>
-          </ul>
-        </article>
-
-        <article class="card feature full live-console">
-          <div class="media-header">
-            <div>
-              <h2>Live console</h2>
-              <p>Rich mock data keeps the site useful on GitHub Pages even without a backend.</p>
-            </div>
-            <button class="button secondary" id="demo-refresh" type="button">Refresh demo</button>
-          </div>
-
-          <div class="console-grid">
-            <section class="console-block">
-              <div class="panel-header compact-header">
-                <span>Operational metrics</span>
-                <span class="muted" id="metrics-source">static demo</span>
-              </div>
-              <div class="metrics-grid" id="metrics-grid"></div>
-            </section>
-
-            <section class="console-block">
-              <div class="panel-header compact-header">
-                <span>Workflow cards</span>
-                <span class="muted">policy-first</span>
-              </div>
-              <div class="workflow-grid" id="workflow-grid"></div>
-            </section>
-
-            <section class="console-block span-wide">
-              <div class="panel-header compact-header">
-                <span>Recent activity</span>
-                <span class="muted" id="activity-source">demo feed</span>
-              </div>
-              <div class="activity-list" id="activity-list"></div>
-            </section>
-          </div>
-        </article>
-
-        <article class="card feature full media-panel">
-          <div class="media-header">
-            <div>
-              <h2>Motion preview</h2>
-              <p>Animated SVG assets render directly in the repo README and on GitHub Pages.</p>
-            </div>
-            <a class="button secondary" href="animations/ai-hypervisor-hero.svg">Open SVG</a>
-          </div>
-          <img
-            src="animations/ai-hypervisor-flow.svg"
-            alt="Animated workflow showing API, scheduler, GPU, task, and observability"
-            class="flow-art"
-          />
-        </article>
-
-        <article class="card feature wide">
-          <h2>System View</h2>
-          <div class="timeline">
-            <div class="step">
-              <span>1</span>
-              <div>
-                <strong>API server</strong>
-                <p>Accepts requests, validates state transitions, and exposes health.</p>
-              </div>
-            </div>
-            <div class="step">
-              <span>2</span>
-              <div>
-                <strong>Scheduler + GPU orchestrator</strong>
-                <p>Score capacity, reserve accelerators, and allocate placement.</p>
-              </div>
-            </div>
-            <div class="step">
-              <span>3</span>
-              <div>
-                <strong>Task executor + host agent</strong>
-                <p>Carry out long-running work and talk to libvirt at the edge.</p>
-              </div>
-            </div>
-          </div>
-        </article>
-      </section>
-    </main>
-
-    <script src="app.js"></script>
+  <body class="bg-background text-text-main antialiased selection:bg-blue-500/30">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
