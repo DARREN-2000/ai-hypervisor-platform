@@ -451,20 +451,20 @@ func (s *Service) provisionVM(ctx context.Context, vmID string, task *models.Tas
 
 	vm, err := s.getVM(ctx, vmID)
 	if err != nil {
-		_ = s.updateTaskStatus(ctx, task, models.TaskStatusFailed, map[string]interface{}{"error": err.Error()})
+		_ = s.updateTaskStatus(ctx, task, models.TaskStatusFailed, map[string]interface{}{"error": safeErrorMsg(err)})
 		return err
 	}
 
 	domainXML, err := libvirtutil.BuildDomainXML(vm)
 	if err != nil {
 		_ = s.markVMFailed(ctx, vm, err)
-		_ = s.updateTaskStatus(ctx, task, models.TaskStatusFailed, map[string]interface{}{"error": err.Error()})
+		_ = s.updateTaskStatus(ctx, task, models.TaskStatusFailed, map[string]interface{}{"error": safeErrorMsg(err)})
 		return err
 	}
 
 	if err := s.libvirt.DefineDomain(ctx, domainXML); err != nil {
 		_ = s.markVMFailed(ctx, vm, err)
-		_ = s.updateTaskStatus(ctx, task, models.TaskStatusFailed, map[string]interface{}{"error": err.Error()})
+		_ = s.updateTaskStatus(ctx, task, models.TaskStatusFailed, map[string]interface{}{"error": safeErrorMsg(err)})
 		return apierrors.InternalError("failed to define domain").WithCause(err)
 	}
 
@@ -475,7 +475,7 @@ func (s *Service) provisionVM(ctx context.Context, vmID string, task *models.Tas
 	vm.ErrorMessage = ""
 
 	if err := s.vmRepo.Update(ctx, vm); err != nil {
-		_ = s.updateTaskStatus(ctx, task, models.TaskStatusFailed, map[string]interface{}{"error": err.Error()})
+		_ = s.updateTaskStatus(ctx, task, models.TaskStatusFailed, map[string]interface{}{"error": safeErrorMsg(err)})
 		return apierrors.InternalError("failed to update vm state").WithCause(err)
 	}
 
@@ -490,7 +490,7 @@ func (s *Service) destroyVM(ctx context.Context, vmID string, task *models.Task)
 
 	vm, err := s.getVM(ctx, vmID)
 	if err != nil {
-		_ = s.updateTaskStatus(ctx, task, models.TaskStatusFailed, map[string]interface{}{"error": err.Error()})
+		_ = s.updateTaskStatus(ctx, task, models.TaskStatusFailed, map[string]interface{}{"error": safeErrorMsg(err)})
 		return err
 	}
 
@@ -510,7 +510,7 @@ func (s *Service) destroyVM(ctx context.Context, vmID string, task *models.Task)
 	}
 
 	if err := s.vmRepo.Delete(ctx, vmID); err != nil {
-		_ = s.updateTaskStatus(ctx, task, models.TaskStatusFailed, map[string]interface{}{"error": err.Error()})
+		_ = s.updateTaskStatus(ctx, task, models.TaskStatusFailed, map[string]interface{}{"error": safeErrorMsg(err)})
 		return apierrors.InternalError("failed to delete vm record").WithCause(err)
 	}
 
@@ -525,7 +525,7 @@ func (s *Service) markVMFailed(ctx context.Context, vm *models.VirtualMachine, c
 	vm.State = models.VMStateFailed
 	vm.UpdatedAt = time.Now().UTC()
 	if cause != nil {
-		vm.ErrorMessage = cause.Error()
+		vm.ErrorMessage = safeErrorMsg(cause)
 	}
 	return s.vmRepo.Update(ctx, vm)
 }
@@ -717,7 +717,16 @@ func maxInt(a, b int) int {
 	return b
 }
 
+
+func safeErrorMsg(err error) string {
+	if apiErr, ok := err.(*apierrors.APIError); ok {
+		return apiErr.Message
+	}
+	return "internal error"
+}
+
 // vmLockManager provides per-VM locks.
+
 type vmLockManager struct {
 	mu    sync.Mutex
 	locks map[string]*vmLockEntry
