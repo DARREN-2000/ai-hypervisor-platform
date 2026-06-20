@@ -199,6 +199,12 @@ h2 {
   outline-offset: 2px;
 }
 
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .button.primary {
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
   color: #041018;
