@@ -4,7 +4,7 @@ import Home from "@/pages/Home"
 
 function App() {
   return (
-    <Router>
+    <Router basename="/ai-hypervisor-platform">
       <MainLayout>
         <Routes>
           <Route path="/" element={<Home />} />
