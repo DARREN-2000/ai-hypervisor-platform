@@ -43,9 +43,9 @@ export default function Footer() {
               The operating system for AI infrastructure. Unify, orchestrate, and scale with a single command.
             </p>
             <div className="flex items-center gap-4 text-text-muted">
-              <a href="https://github.com/onyx" className="hover:text-white transition-colors"><Github size={20} /></a>
-              <a href="https://twitter.com/onyx" className="hover:text-white transition-colors"><Twitter size={20} /></a>
-              <a href="https://linkedin.com/company/onyx" className="hover:text-white transition-colors"><Linkedin size={20} /></a>
+              <a href="https://github.com/onyx" aria-label="GitHub" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"><Github size={20} /></a>
+              <a href="https://twitter.com/onyx" aria-label="Twitter" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"><Twitter size={20} /></a>
+              <a href="https://linkedin.com/company/onyx" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"><Linkedin size={20} /></a>
             </div>
           </div>
 
