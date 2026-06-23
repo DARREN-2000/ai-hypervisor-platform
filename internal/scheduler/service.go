@@ -200,10 +200,11 @@ func (s *Service) schedule(ctx context.Context, vm *models.VirtualMachine, exclu
 			continue
 		}
 
-		snapshot := s.buildSnapshot(ctx, host)
+		// Bolt optimization: check in-memory resource fit BEFORE making expensive DB snapshot queries (N+1 avoidance)
 		if !s.fitsResources(host, demand) {
 			continue
 		}
+		snapshot := s.buildSnapshot(ctx, host)
 
 		selectedGPUs, err := selectGPUsForVM(vm.GPURequests, snapshot.GPUs, policy.GPUSelectionStrategy())
 		if err != nil {
