@@ -109,21 +109,20 @@ func gpuAvailableMemoryGB(gpu *models.GPU) int {
 }
 
 func gpuSupportsFeature(gpu *models.GPU, feature string) bool {
-	feature = strings.ToLower(strings.TrimSpace(feature))
-	switch feature {
-	case "cuda":
+	// Bolt optimization: use EqualFold to avoid allocation from ToLower
+	feature = strings.TrimSpace(feature)
+	if strings.EqualFold(feature, "cuda") {
 		return gpu.Capabilities.CUDA
-	case "tensor-cores", "tensor":
+	} else if strings.EqualFold(feature, "tensor-cores") || strings.EqualFold(feature, "tensor") {
 		return gpu.Capabilities.TensorCores
-	case "rt-cores", "rt":
+	} else if strings.EqualFold(feature, "rt-cores") || strings.EqualFold(feature, "rt") {
 		return gpu.Capabilities.RTCores
-	case "nvlink":
+	} else if strings.EqualFold(feature, "nvlink") {
 		return gpu.Capabilities.NVLinkSupported
-	case "mig":
+	} else if strings.EqualFold(feature, "mig") {
 		return gpu.Capabilities.MIGSupported
-	default:
-		return true
 	}
+	return true
 }
 
 func subtractGPUs(all []*models.GPU, remove []*models.GPU) []*models.GPU {
