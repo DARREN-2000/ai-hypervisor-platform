@@ -33,7 +33,7 @@ export default function Footer() {
       <div className="container mx-auto px-6 max-w-container">
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-10 mb-16">
           <div className="col-span-2 lg:col-span-1">
-            <Link to="/" className="flex items-center gap-2 mb-6">
+            <Link to="/" className="flex items-center gap-2 mb-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded">
               <div className="w-6 h-6 rounded bg-white text-black flex items-center justify-center font-bold text-xs">
                 O
               </div>
@@ -43,9 +43,9 @@ export default function Footer() {
               The operating system for AI infrastructure. Unify, orchestrate, and scale with a single command.
             </p>
             <div className="flex items-center gap-4 text-text-muted">
-              <a href="https://github.com/onyx" className="hover:text-white transition-colors"><Github size={20} /></a>
-              <a href="https://twitter.com/onyx" className="hover:text-white transition-colors"><Twitter size={20} /></a>
-              <a href="https://linkedin.com/company/onyx" className="hover:text-white transition-colors"><Linkedin size={20} /></a>
+              <a href="https://github.com/onyx" aria-label="GitHub" className="hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded"><Github size={20} /></a>
+              <a href="https://twitter.com/onyx" aria-label="Twitter" className="hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded"><Twitter size={20} /></a>
+              <a href="https://linkedin.com/company/onyx" aria-label="LinkedIn" className="hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded"><Linkedin size={20} /></a>
             </div>
           </div>
 
@@ -55,7 +55,7 @@ export default function Footer() {
               <ul className="space-y-3">
                 {links.map((link) => (
                   <li key={link.name}>
-                    <Link to={link.href} className="text-sm text-text-muted hover:text-white transition-colors">
+                    <Link to={link.href} className="text-sm text-text-muted hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded">
                       {link.name}
                     </Link>
                   </li>
