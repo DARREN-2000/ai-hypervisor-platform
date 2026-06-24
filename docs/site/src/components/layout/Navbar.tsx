@@ -37,7 +37,7 @@ export default function Navbar() {
     >
       <div className="container mx-auto px-6 max-w-container flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Link to="/" className="flex items-center gap-2 group">
+          <Link to="/" className="flex items-center gap-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded">
             <div className="w-8 h-8 rounded bg-white text-black flex items-center justify-center font-bold text-lg group-hover:scale-105 transition-transform shadow-[0_0_15px_rgba(255,255,255,0.3)]">
               O
             </div>
@@ -51,7 +51,7 @@ export default function Navbar() {
             <Link
               key={link.name}
               to={link.href}
-              className="text-sm text-text-muted hover:text-white transition-colors"
+              className="text-sm text-text-muted hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded"
             >
               {link.name}
             </Link>
@@ -59,7 +59,7 @@ export default function Navbar() {
         </nav>
 
         <div className="hidden md:flex items-center gap-4">
-          <button className="text-text-muted hover:text-white flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border border-white/10 bg-white/5 transition-colors">
+          <button aria-label="Search" className="text-text-muted hover:text-white flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border border-white/10 bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
             <Command size={14} />
             <span>K</span>
           </button>
@@ -69,8 +69,11 @@ export default function Navbar() {
 
         {/* Mobile Toggle */}
         <button
-          className="md:hidden text-white"
+          className="md:hidden text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-expanded={mobileMenuOpen}
+          aria-controls="mobile-menu"
+          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
         >
           {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -78,12 +81,12 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-black/95 backdrop-blur-xl border-b border-white/10 p-6 flex flex-col gap-4 shadow-2xl">
+        <div id="mobile-menu" className="md:hidden absolute top-full left-0 right-0 bg-black/95 backdrop-blur-xl border-b border-white/10 p-6 flex flex-col gap-4 shadow-2xl">
           {navLinks.map((link) => (
             <Link
               key={link.name}
               to={link.href}
-              className="text-base text-text-muted hover:text-white py-2 border-b border-white/5"
+              className="text-base text-text-muted hover:text-white py-2 border-b border-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded"
             >
               {link.name}
             </Link>
