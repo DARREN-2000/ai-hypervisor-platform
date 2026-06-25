@@ -59,7 +59,10 @@ export default function Navbar() {
         </nav>
 
         <div className="hidden md:flex items-center gap-4">
-          <button className="text-text-muted hover:text-white flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border border-white/10 bg-white/5 transition-colors">
+          <button
+            aria-label="Search command"
+            className="text-text-muted hover:text-white flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border border-white/10 bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+          >
             <Command size={14} />
             <span>K</span>
           </button>
@@ -69,8 +72,10 @@ export default function Navbar() {
 
         {/* Mobile Toggle */}
         <button
-          className="md:hidden text-white"
+          className="md:hidden text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 rounded-md p-1"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-expanded={mobileMenuOpen}
+          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
         >
           {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
