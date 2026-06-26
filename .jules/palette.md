@@ -1,0 +1,3 @@
+## 2024-05-18 - Added ARIA labels and focus styles to icon-only buttons
+**Learning:** Icon-only buttons like social media links or utility commands (Command+K) often lack explicit names, reducing screen reader accessibility. Mobile navigation toggles require `aria-expanded` attributes to communicate state changes effectively.
+**Action:** Always provide `aria-label` attributes for semantic meaning in icon-only contexts. Add `aria-expanded` to mobile menu toggle triggers. Ensure keyboard interactivity is communicated visually via `focus-visible` styling using consistent focus rings across the design system.
