@@ -4,3 +4,7 @@
 ## 2026-06-19 - Pre-allocate slice capacity
 **Learning:** Unnecessary array reallocation occurs when appending to slices without pre-allocated capacity inside a loop.
 **Action:** Always specify the required capacity when initializing slices with `make` if the size is known, especially within loops, to avoid the overhead of Go's runtime array resizing.
+
+## 2026-06-26 - Fast-path Filtering Before Expensive Operations
+**Learning:** In the scheduler loop, calling `buildSnapshot` (which performs DB queries and network calls) before a simple, in-memory capacity check (`fitsResources`) caused massive overhead when rejecting invalid hosts.
+**Action:** Always place cheap, fast-path filter conditions before expensive operations like network requests or database queries when filtering candidates in a loop.
