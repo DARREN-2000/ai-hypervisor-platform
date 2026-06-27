@@ -1,70 +1,47 @@
-# AI Hypervisor Platform Runbook
+# Operations Guide
 
-This runbook covers the minimum operational steps for deploying, observing, and recovering the platform.
+This guide covers the day-to-day operations, monitoring, and scaling of the AI Hypervisor Platform.
 
-## Deploy
+## Observability
 
-1. Validate the config and manifests.
+The platform exports rich telemetry using open standards.
 
-```bash
-go test ./...
-go vet ./...
-$(go env GOPATH)/bin/staticcheck ./...
-$(go env GOPATH)/bin/kubeconform -strict -summary deploy/kubernetes/manifests.yaml
-```
+### Monitoring (Prometheus)
 
-2. Apply the Kubernetes manifests.
+All services expose a `/metrics` endpoint. The `resource-monitor` service aggregates cluster-wide metrics (VM counts, host capacity, GPU utilization).
 
-```bash
-kubectl apply -f deploy/kubernetes/manifests.yaml
-kubectl rollout status deploy/api-server -n aihypervisor
-```
+**Key Metrics:**
+- `aihypervisor_vms_total`: Total number of VMs by status.
+- `aihypervisor_gpu_utilization`: Percentage utilization of GPUs.
+- `aihypervisor_host_memory_bytes`: Available vs used memory per node.
 
-3. Confirm the API is reachable.
+### Tracing (OpenTelemetry)
 
-```bash
-kubectl -n aihypervisor port-forward svc/api-server 8080:80
-curl http://127.0.0.1:8080/health
-curl http://127.0.0.1:8080/ready
-```
+Distributed tracing is implemented via OTLP. Traces track the lifecycle of a request from the API Server, through NATS, to the Host Agent.
 
-## Observe
+- Set `OtelEndpoint` in the configuration to forward traces to Jaeger or an OpenTelemetry Collector.
 
-- Scrape `/metrics` on the API metrics port exposed in `deploy/kubernetes/manifests.yaml`.
-- Check `/health`, `/ready`, and `/live` for control-plane status.
-- Use the Grafana dashboards in `deploy/grafana/dashboards/` to review cluster, GPU, and VM lifecycle trends.
-- Review structured logs for `request_id` and `trace_id` fields when tracing user-visible failures.
+### Logging
 
-Example log and metrics checks:
+Services use structured JSON logging via Logrus.
+- Log levels can be configured per service.
+- Correlation IDs (`trace_id`, `request_id`) are injected into log entries automatically.
 
-```bash
-kubectl logs -n aihypervisor deploy/api-server -f
-kubectl top pods -n aihypervisor
-```
+## Scaling
 
-## Recover
+### Control Plane Scaling
 
-1. If the API server is unhealthy, inspect its pod events and logs.
+- The `api-server` and `scheduler` are stateless and can be scaled horizontally behind a load balancer.
+- The `task-executor` uses NATS JetStream consumer groups. Scaling it increases the concurrency of background operations.
+- `gpu-orchestrator` should typically be run as a singleton or with leader election (handled via Redis) to prevent race conditions during allocation.
 
-```bash
-kubectl describe pod -n aihypervisor -l app=api-server
-kubectl logs -n aihypervisor -l app=api-server --tail=200
-```
+### Infrastructure Scaling
 
-2. Restart the deployment after fixing the underlying dependency.
+- **PostgreSQL**: Must be scaled using standard HA techniques (e.g., streaming replication, Patroni).
+- **Redis**: Can be clustered for high availability.
+- **NATS**: Deploy as a highly available cluster.
 
-```bash
-kubectl rollout restart deployment/api-server -n aihypervisor
-kubectl rollout status deployment/api-server -n aihypervisor
-```
+## Maintenance and Backups
 
-3. If the issue is external storage or messaging, verify Postgres, Redis, and NATS endpoints before recycling pods.
-
-4. If only the scheduler or GPU orchestration path is impacted, isolate the failing component and check the corresponding service logs before rebalancing workloads.
-
-5. Escalate to a full redeploy only after health checks stabilize and the metrics path is reporting again.
-
-## References
-
-- [Observability guide](observability.md)
-- [Deployment guide](../deployment/DEPLOYMENT_GUIDE.md)
+- Regularly backup the PostgreSQL database as it contains the authoritative state of all VMs and cluster topologies.
+- Redis and NATS states are ephemeral and can be lost without data corruption, though active tasks might need to be retried.
