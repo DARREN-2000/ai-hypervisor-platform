@@ -17,7 +17,10 @@ import (
 	"github.com/DARREN-2000/ai-hypervisor-platform/internal/app"
 	"github.com/DARREN-2000/ai-hypervisor-platform/internal/config"
 	"github.com/DARREN-2000/ai-hypervisor-platform/internal/logging"
+	"github.com/DARREN-2000/ai-hypervisor-platform/internal/mocks"
 	"github.com/DARREN-2000/ai-hypervisor-platform/internal/observability"
+	"github.com/DARREN-2000/ai-hypervisor-platform/internal/scheduler"
+	"github.com/DARREN-2000/ai-hypervisor-platform/internal/vmmanager"
 )
 
 var rootCmd = &cobra.Command{
@@ -108,8 +111,25 @@ func runAPIServer(cmd *cobra.Command, args []string) {
 		},
 	})
 
-	// TODO: Initialize service implementations and inject them here.
-	// apiServer.SetDependencies(vmMgr, scheduler, gpuOrch, taskExec, resMon, eventBus, auditLogger, stateStore)
+	// Initialize service implementations and inject them here.
+	gpuOrch := &mocks.MockGPUOrchestrator{}
+	taskExec := &mocks.MockTaskExecutor{}
+	eventBus := &mocks.MockEventBus{}
+	auditLogger := &mocks.MockAuditLogger{}
+	stateStore := &mocks.MockStateStore{}
+	resMon := &mocks.MockResourceMonitor{}
+
+	vmMgrDeps := vmmanager.Dependencies{
+		Logger: log,
+	}
+	vmMgr := vmmanager.NewService(cfg.VMManager, vmMgrDeps)
+
+	schedDeps := scheduler.Dependencies{
+		Logger: log,
+	}
+	sched := scheduler.NewService(cfg.Scheduler, schedDeps)
+
+	apiServer.SetDependencies(vmMgr, sched, gpuOrch, taskExec, resMon, eventBus, auditLogger, stateStore)
 
 	// Register routes
 	apiServer.RegisterRoutes()
