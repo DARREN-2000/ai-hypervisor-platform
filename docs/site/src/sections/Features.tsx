@@ -59,13 +59,13 @@ export default function Features() {
       <div className="container mx-auto px-6 max-w-container">
 
         <div className="mb-16">
-          <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-4">Primitives for the AI era.</h2>
-          <p className="text-text-muted text-lg max-w-2xl">
+          <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-4 text-white">Primitives for the AI era.</h2>
+          <p className="text-text-muted text-lg max-w-2xl font-medium">
             Everything you need to orchestrate state-of-the-art models, built into a single cohesive layer.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-8 gap-4 auto-rows-[200px]">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-8 gap-4 auto-rows-[220px]">
           {features.map((feature, idx) => (
             <motion.div
               key={idx}
@@ -74,17 +74,17 @@ export default function Features() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: idx * 0.05 }}
               className={cn(
-                "glass p-6 rounded-2xl flex flex-col justify-between group cursor-default hover:border-white/20 transition-all duration-300 relative overflow-hidden",
+                "glass p-6 rounded-2xl flex flex-col justify-between group cursor-default hover:border-white/[0.12] transition-all duration-500 relative overflow-hidden hover:-translate-y-1",
                 feature.className
               )}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white border border-white/10 group-hover:scale-110 transition-transform">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <div className="w-9 h-9 rounded-md bg-white/[0.03] flex items-center justify-center text-zinc-300 border border-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] group-hover:text-white transition-colors duration-300">
                 {feature.icon}
               </div>
               <div className="relative z-10">
-                <h3 className="font-semibold text-lg text-white mb-2">{feature.title}</h3>
-                <p className="text-sm text-text-muted line-clamp-2 group-hover:line-clamp-none transition-all">{feature.description}</p>
+                <h3 className="font-medium text-base text-zinc-100 mb-2">{feature.title}</h3>
+                <p className="text-sm text-zinc-400 line-clamp-2 group-hover:line-clamp-none transition-all duration-300">{feature.description}</p>
               </div>
             </motion.div>
           ))}

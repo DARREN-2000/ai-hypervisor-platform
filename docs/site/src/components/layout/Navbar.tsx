@@ -31,17 +31,17 @@ export default function Navbar() {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b border-transparent",
-        scrolled ? "bg-black/50 backdrop-blur-md border-white/10 py-3" : "bg-transparent py-5"
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b",
+        scrolled ? "bg-black/60 backdrop-blur-xl border-white/[0.08] py-3 shadow-[0_4px_30px_rgba(0,0,0,0.1)]" : "bg-transparent border-transparent py-5"
       )}
     >
       <div className="container mx-auto px-6 max-w-container flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded bg-white text-black flex items-center justify-center font-bold text-lg group-hover:scale-105 transition-transform shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+            <div className="w-7 h-7 rounded-md bg-white text-black flex items-center justify-center font-bold text-sm shadow-[inset_0_1px_0_rgba(255,255,255,1)]">
               O
             </div>
-            <span className="font-semibold text-lg tracking-tight">Onyx</span>
+            <span className="font-semibold text-base tracking-tight ml-1">Onyx</span>
           </Link>
         </div>
 
