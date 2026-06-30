@@ -1,0 +1,163 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: aihypervisor
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: aihypervisor
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./deploy/scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aihypervisor"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass password
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "password", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nats:
+    image: nats:2.9-alpine
+    command: --user aihypervisor --pass password
+    ports:
+      - "4222:4222"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8222/varz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-server:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile
+      args:
+        SERVICE: api-server
+    image: aihypervisor/api-server:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - AIHYPERVISOR_CONFIG=/etc/aihypervisor/config.yaml
+    volumes:
+      - ./config/sample-config.yaml:/etc/aihypervisor/config.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_started
+
+  vm-manager:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile
+      args:
+        SERVICE: vm-manager
+    image: aihypervisor/vm-manager:latest
+    environment:
+      - AIHYPERVISOR_CONFIG=/etc/aihypervisor/config.yaml
+    volumes:
+      - ./config/sample-config.yaml:/etc/aihypervisor/config.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_started
+
+  gpu-orchestrator:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile
+      args:
+        SERVICE: gpu-orchestrator
+    image: aihypervisor/gpu-orchestrator:latest
+    environment:
+      - AIHYPERVISOR_CONFIG=/etc/aihypervisor/config.yaml
+    volumes:
+      - ./config/sample-config.yaml:/etc/aihypervisor/config.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_started
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile
+      args:
+        SERVICE: scheduler
+    image: aihypervisor/scheduler:latest
+    environment:
+      - AIHYPERVISOR_CONFIG=/etc/aihypervisor/config.yaml
+    volumes:
+      - ./config/sample-config.yaml:/etc/aihypervisor/config.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_started
+
+  task-executor:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile
+      args:
+        SERVICE: task-executor
+    image: aihypervisor/task-executor:latest
+    environment:
+      - AIHYPERVISOR_CONFIG=/etc/aihypervisor/config.yaml
+    volumes:
+      - ./config/sample-config.yaml:/etc/aihypervisor/config.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_started
+
+  resource-monitor:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile
+      args:
+        SERVICE: resource-monitor
+    image: aihypervisor/resource-monitor:latest
+    environment:
+      - AIHYPERVISOR_CONFIG=/etc/aihypervisor/config.yaml
+    volumes:
+      - ./config/sample-config.yaml:/etc/aihypervisor/config.yaml
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_started
+
+volumes:
+  postgres-data:
+  redis-data:

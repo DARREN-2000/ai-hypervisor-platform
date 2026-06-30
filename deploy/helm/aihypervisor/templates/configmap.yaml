@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "aihypervisor.fullname" . }}-config
+data:
+  config.yaml: |
+    database:
+      host: {{ .Values.config.postgresHost }}
+      port: {{ .Values.config.postgresPort }}
+      database: {{ .Values.config.postgresDB }}
+    redis:
+      host: {{ .Values.config.redisHost }}
+      port: {{ .Values.config.redisPort }}
+    nats:
+      urls:
+        - {{ .Values.config.natsUrls }}
