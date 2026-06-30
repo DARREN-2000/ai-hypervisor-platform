@@ -326,6 +326,26 @@ spec:
           env:
             - name: AIHYPERVISOR_CONFIG
               value: "/etc/aihypervisor/config.yaml"
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: database-password
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: redis-password
+            - name: NATS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: nats-password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: jwt-secret
           volumeMounts:
             - name: config
               mountPath: /etc/aihypervisor
@@ -338,6 +358,15 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "echo \'\' | nc localhost 5000"
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 2
           resources:
             requests:
               cpu: 1000m
@@ -394,9 +423,45 @@ spec:
           env:
             - name: AIHYPERVISOR_CONFIG
               value: "/etc/aihypervisor/config.yaml"
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: database-password
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: redis-password
+            - name: NATS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: nats-password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: jwt-secret
           volumeMounts:
             - name: config
               mountPath: /etc/aihypervisor
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "echo \'\' | nc localhost 5001"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "echo \'\' | nc localhost 5001"
+            initialDelaySeconds: 10
+            periodSeconds: 5
           resources:
             requests:
               cpu: 500m
@@ -453,9 +518,45 @@ spec:
           env:
             - name: AIHYPERVISOR_CONFIG
               value: "/etc/aihypervisor/config.yaml"
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: database-password
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: redis-password
+            - name: NATS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: nats-password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: jwt-secret
           volumeMounts:
             - name: config
               mountPath: /etc/aihypervisor
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "echo \'\' | nc localhost 5002"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "echo \'\' | nc localhost 5002"
+            initialDelaySeconds: 10
+            periodSeconds: 5
           resources:
             requests:
               cpu: 500m
@@ -510,9 +611,41 @@ spec:
           env:
             - name: AIHYPERVISOR_CONFIG
               value: "/etc/aihypervisor/config.yaml"
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: database-password
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: redis-password
+            - name: NATS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: nats-password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: jwt-secret
           volumeMounts:
             - name: config
               mountPath: /etc/aihypervisor
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 8081
+            initialDelaySeconds: 10
+            periodSeconds: 5
           resources:
             requests:
               cpu: 500m
@@ -567,9 +700,41 @@ spec:
           env:
             - name: AIHYPERVISOR_CONFIG
               value: "/etc/aihypervisor/config.yaml"
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: database-password
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: redis-password
+            - name: NATS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: nats-password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: jwt-secret
           volumeMounts:
             - name: config
               mountPath: /etc/aihypervisor
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
           resources:
             requests:
               cpu: 500m
@@ -621,6 +786,26 @@ spec:
           env:
             - name: AIHYPERVISOR_CONFIG
               value: "/etc/aihypervisor/config.yaml"
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: database-password
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: redis-password
+            - name: NATS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: nats-password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: aihypervisor-secrets
+                  key: jwt-secret
             - name: NODE_NAME
               valueFrom:
                 fieldRef:
@@ -634,6 +819,18 @@ spec:
               mountPath: /sys
             - name: dev
               mountPath: /dev
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
           resources:
             requests:
               cpu: 1000m
@@ -833,3 +1030,101 @@ spec:
         target:
           type: Utilization
           averageUtilization: 85
+
+---
+# HorizontalPodAutoscaler for Scheduler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: scheduler
+  namespace: aihypervisor
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: scheduler
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+
+---
+# HorizontalPodAutoscaler for GPU Orchestrator
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: gpu-orchestrator
+  namespace: aihypervisor
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: gpu-orchestrator
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+
+---
+# HorizontalPodAutoscaler for Resource Monitor
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: resource-monitor
+  namespace: aihypervisor
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: resource-monitor
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+
+---
+# Secrets for AI Hypervisor
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aihypervisor-secrets
+  namespace: aihypervisor
+type: Opaque
+stringData:
+  database-password: "password"
+  redis-password: "password"
+  nats-password: "password"
+  jwt-secret: "super-secure-jwt-secret-key-change-in-production"

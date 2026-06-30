@@ -1,6 +1,9 @@
 package api
 
 import (
+	"sync"
+	"golang.org/x/time/rate"
+
 	"context"
 	"fmt"
 	"net/http"
@@ -120,6 +123,7 @@ func (s *APIServer) RegisterRoutes() {
 	s.router.Use(s.observabilityMiddleware)
 	s.router.Use(s.errorRecoveryMiddleware)
 	s.router.Use(s.securityHeadersMiddleware)
+	s.router.Use(s.rateLimitingMiddleware)
 
 	// Health and status
 	s.router.HandleFunc("/health", s.handleHealth).Methods(http.MethodGet)
@@ -567,4 +571,76 @@ func routeTemplate(r *http.Request) string {
 		}
 	}
 	return r.URL.Path
+}
+
+// rateLimiter structure to store IP based limiters
+type rateLimiter struct {
+	mu       sync.Mutex
+	limiters map[string]*rate.Limiter
+	lastSeen map[string]time.Time
+	rate     rate.Limit
+	burst    int
+}
+
+func newRateLimiter(r rate.Limit, b int) *rateLimiter {
+	rl := &rateLimiter{
+		limiters: make(map[string]*rate.Limiter),
+		lastSeen: make(map[string]time.Time),
+		rate:     r,
+		burst:    b,
+	}
+
+	go rl.cleanupStaleLimiters()
+	return rl
+}
+
+func (rl *rateLimiter) cleanupStaleLimiters() {
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		rl.mu.Lock()
+		for ip, lastSeenTime := range rl.lastSeen {
+			if time.Since(lastSeenTime) > 3*time.Minute {
+				delete(rl.limiters, ip)
+				delete(rl.lastSeen, ip)
+			}
+		}
+		rl.mu.Unlock()
+	}
+}
+
+func (rl *rateLimiter) getLimiter(ip string) *rate.Limiter {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+
+	limiter, exists := rl.limiters[ip]
+	if !exists {
+		limiter = rate.NewLimiter(rl.rate, rl.burst)
+		rl.limiters[ip] = limiter
+	}
+	rl.lastSeen[ip] = time.Now()
+
+	return limiter
+}
+
+
+var globalRateLimiter = newRateLimiter(rate.Limit(10), 20) // 10 requests per second, burst of 20
+
+func (s *APIServer) rateLimitingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Use RemoteAddr as key (simplistic, assumes no proxy or uses proxy's remote addr correctly)
+		ip := r.RemoteAddr
+		limiter := globalRateLimiter.getLimiter(ip)
+
+		if !limiter.Allow() {
+			s.writeJSON(w, http.StatusTooManyRequests, map[string]string{
+				"error": "too_many_requests",
+				"message": "Rate limit exceeded",
+			})
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

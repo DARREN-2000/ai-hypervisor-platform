@@ -1,0 +1,93 @@
+{{- range $svcName, $svcConfig := .Values.services }}
+{{- if $svcConfig.enabled }}
+---
+apiVersion: {{ if $svcConfig.stateful }}apps/v1{{ else }}apps/v1{{ end }}
+kind: {{ if $svcConfig.daemonset }}DaemonSet{{ else if $svcConfig.stateful }}StatefulSet{{ else }}Deployment{{ end }}
+metadata:
+  name: {{ include "aihypervisor.fullname" $ }}-{{ $svcName | kebabcase }}
+  labels:
+    app: {{ $svcName | kebabcase }}
+spec:
+  {{- if not $svcConfig.daemonset }}
+  replicas: {{ $.Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: {{ $svcName | kebabcase }}
+  template:
+    metadata:
+      labels:
+        app: {{ $svcName | kebabcase }}
+    spec:
+      containers:
+        - name: {{ $svcName | kebabcase }}
+          image: "{{ if eq $svcName "taskExecutor" }}{{ $.Values.image.workerRepository }}{{ else }}{{ $.Values.image.repository }}/{{ $svcName | kebabcase }}{{ end }}:{{ $.Values.image.tag }}"
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          ports:
+            {{- if $svcConfig.port }}
+            - name: http
+              containerPort: {{ $svcConfig.port }}
+              protocol: TCP
+            {{- end }}
+            - name: metrics
+              containerPort: {{ $svcConfig.metricsPort }}
+              protocol: TCP
+          env:
+            - name: AIHYPERVISOR_CONFIG
+              value: "/etc/aihypervisor/config.yaml"
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "aihypervisor.fullname" $ }}-secrets
+                  key: database-password
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "aihypervisor.fullname" $ }}-secrets
+                  key: redis-password
+            - name: NATS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "aihypervisor.fullname" $ }}-secrets
+                  key: nats-password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "aihypervisor.fullname" $ }}-secrets
+                  key: jwt-secret
+          volumeMounts:
+            - name: config
+              mountPath: /etc/aihypervisor
+          {{- if $svcConfig.port }}
+          livenessProbe:
+            tcpSocket:
+              port: {{ $svcConfig.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: {{ $svcConfig.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          {{- else }}
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          {{- end }}
+          resources:
+            {{- toYaml $.Values.resources | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "aihypervisor.fullname" $ }}-config
+{{- end }}
+{{- end }}
