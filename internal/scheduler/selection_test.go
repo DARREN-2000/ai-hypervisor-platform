@@ -55,3 +55,121 @@ func gpuIDs(gpus []*models.GPU) []string {
 	}
 	return ids
 }
+
+func TestGPUMatchesRequest(t *testing.T) {
+	if gpuMatchesRequest(models.GPURequest{}, nil) {
+		t.Error("expected false for nil gpu")
+	}
+
+	gpu := &models.GPU{
+		Type: "nvidia", Model: "A100", VRAM: 40,
+		Capabilities: models.GPUCapabilities{
+			CUDA: true, TensorCores: true,
+		},
+	}
+	if !gpuMatchesRequest(models.GPURequest{}, gpu) {
+		t.Error("expected true for empty request")
+	}
+	if !gpuMatchesRequest(models.GPURequest{Type: "nvidia"}, gpu) {
+		t.Error("expected true for matching type")
+	}
+	if gpuMatchesRequest(models.GPURequest{Type: "amd"}, gpu) {
+		t.Error("expected false for mismatched type")
+	}
+	if !gpuMatchesRequest(models.GPURequest{Model: "A100"}, gpu) {
+		t.Error("expected true for matching model")
+	}
+	if gpuMatchesRequest(models.GPURequest{Model: "V100"}, gpu) {
+		t.Error("expected false for mismatched model")
+	}
+	if !gpuMatchesRequest(models.GPURequest{MinMemoryGB: 30}, gpu) {
+		t.Error("expected true for sufficient memory")
+	}
+	if gpuMatchesRequest(models.GPURequest{MinMemoryGB: 50}, gpu) {
+		t.Error("expected false for insufficient memory")
+	}
+	if !gpuMatchesRequest(models.GPURequest{RequiredFeatures: []string{"cuda", "tensor-cores"}}, gpu) {
+		t.Error("expected true for supported features")
+	}
+	if gpuMatchesRequest(models.GPURequest{RequiredFeatures: []string{"rt-cores"}}, gpu) {
+		t.Error("expected false for unsupported feature")
+	}
+}
+
+func TestGPUAvailableMemoryGB(t *testing.T) {
+	if gpuAvailableMemoryGB(nil) != 0 {
+		t.Error("expected 0 for nil gpu")
+	}
+
+	gpu := &models.GPU{VRAM: 40}
+	if gpuAvailableMemoryGB(gpu) != 40 {
+		t.Error("expected 40 from VRAM")
+	}
+
+	gpu.Metrics = &models.GPUMetrics{MemoryFree: 16384} // 16 GB
+	if gpuAvailableMemoryGB(gpu) != 16 {
+		t.Error("expected 16 from Metrics")
+	}
+}
+
+func TestGPUSupportsFeature(t *testing.T) {
+	gpu := &models.GPU{
+		Capabilities: models.GPUCapabilities{
+			CUDA: true, TensorCores: true, RTCores: false,
+			NVLinkSupported: true, MIGSupported: false,
+		},
+	}
+	tests := []struct{
+		feature string
+		expected bool
+	}{
+		{"cuda", true},
+		{"CUDA", true},
+		{" tensor-cores ", true},
+		{"tensor", true},
+		{"rt-cores", false},
+		{"rt", false},
+		{"nvlink", true},
+		{"mig", false},
+		{"unknown", true},
+	}
+	for _, tt := range tests {
+		if gpuSupportsFeature(gpu, tt.feature) != tt.expected {
+			t.Errorf("feature %s: expected %v", tt.feature, tt.expected)
+		}
+	}
+}
+
+func TestFilterAvailableGPUs(t *testing.T) {
+	gpus := []*models.GPU{
+		nil,
+		{Status: models.GPUStatusAllocated},
+		{Status: models.GPUStatusAvailable, ID: "g1"},
+	}
+	filtered := filterAvailableGPUs(gpus)
+	if len(filtered) != 1 || filtered[0].ID != "g1" {
+		t.Error("unexpected filtered result")
+	}
+}
+
+func TestSubtractGPUs(t *testing.T) {
+	all := []*models.GPU{
+		nil,
+		{ID: "g1"}, {ID: "g2"}, {ID: "g3"},
+	}
+	remove := []*models.GPU{
+		nil,
+		{ID: "g2"},
+	}
+	res := subtractGPUs(all, remove)
+	if len(res) != 2 || res[0].ID != "g1" || res[1].ID != "g3" {
+		t.Error("unexpected subtract result")
+	}
+}
+
+func TestSelectGPUsForVM_EmptyRequests(t *testing.T) {
+	res, err := selectGPUsForVM(nil, nil, GPUSelectionPack)
+	if err != nil || res != nil {
+		t.Error("expected nil, nil")
+	}
+}
